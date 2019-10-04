@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+      crossorigin="anonymous"
+    />
+    <title>Livestream Project Ideas</title>
+  </head>
+  <body class="bg-dark text-white">
+    <nav class="navbar navbar-light bg-light">
+      <div class="container">
+        <span class="navbar-brand mb-0 h1">Livestream Project Ideas</span>
+      </div>
+    </nav>
+
+    <div class="container mt-5">
+      <div class="row">
+        <div class="col-md-6">
+          <h1 class="text-center mb-3">
+            Submit an Idea
+          </h1>
+          <form id="form">
+            <div class="form-group">
+              <input
+                type="text"
+                id="idea-text"
+                class="form-control bg-dark text-white"
+                placeholder="Enter idea (30 chars max)"
+                maxlength="30"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <input
+                type="text"
+                id="idea-tech"
+                class="form-control bg-dark text-white"
+                placeholder="Language, framework, etc"
+                maxlength="30"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <input
+                type="text"
+                id="idea-viewer"
+                class="form-control bg-dark text-white"
+                placeholder="Enter your name"
+                maxlength="20"
+                required
+              />
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">
+              Suggest Idea
+            </button>
+          </form>
+        </div>
+        <div class="col-md-6">
+          <div id="ideas">
+            <!-- <div class="card bg-secondary my-3">
+              <div class="card-body">
+                <p class="lead">
+                  Create a realtime app <strong>(Feathers.js)</strong>
+                  <br />
+                  <em>Submitted by John Doe</em>
+                  <br />
+                  <small>2:05:10</small>
+                </p>
+              </div>
+            </div> -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/@feathersjs/client@^4.3.0/dist/feathers.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+
+    <script>
+      // Socket.io setup
+      const socket = io('http://localhost:3030');
+
+      // Init feathers app
+      const app = feathers();
+
+      // Register socket.io to talk to server
+      app.configure(feathers.socketio(socket));
+
+      document.getElementById('form').addEventListener('submit', sendIdea);
+
+      async function sendIdea(e) {
+        e.preventDefault();
+
+        const text = document.getElementById('idea-text');
+        const tech = document.getElementById('idea-tech');
+        const viewer = document.getElementById('idea-viewer');
+
+        // Create new idea
+        app.service('ideas').create({
+          text: text.value,
+          tech: tech.value,
+          viewer: viewer.value
+        });
+
+        // Clear inputs
+        text.value = '';
+        tech.value = '';
+        viewer.value = '';
+      }
+
+      function renderIdea(idea) {
+        document.getElementById(
+          'ideas'
+        ).innerHTML += `<div class="card bg-secondary my-3">
+              <div class="card-body">
+                <p class="lead">
+                  ${idea.text} <strong>(${idea.tech})</strong>
+                  <br />
+                  <em>Submitted by ${idea.viewer}</em>
+                  <br />
+                  <small>${idea.time}</small>
+                </p>
+              </div>
+            </div>`;
+      }
+
+      async function init() {
+        // Find ideas
+        const ideas = await app.service('ideas').find();
+
+        // Add existing ideas to list
+        ideas.forEach(renderIdea);
+
+        // Add idea in realtime
+        app.service('ideas').on('created', renderIdea);
+      }
+
+      init();
+    </script>
+  </body>
+</html>
